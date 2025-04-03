@@ -11,7 +11,7 @@ let pkg = { name: "Equi-Parents API", version: "desconocida" };
 try {
   const __filename = fileURLToPath(import.meta.url);
   const __dirname = dirname(__filename);
-  const pkgPath = join(__dirname, "../../../package.json");
+  const pkgPath = join(__dirname, "../../package.json");
   const pkgContent = await readFile(pkgPath, "utf-8");
   pkg = JSON.parse(pkgContent);
 } catch (err) {
