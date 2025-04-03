@@ -1,0 +1,186 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String           @id @default(cuid())
+  auth0Id           String           @unique
+  email             String           @unique
+  name              String
+  firstName         String?
+  lastName          String?
+  phone             String?
+  countryCode       String?
+  roleId            String
+  role              Role             @relation(fields: [roleId], references: [id])
+  parentalAccountId String?
+  parentalAccount   ParentalAccount? @relation(fields: [parentalAccountId], references: [id])
+
+  address         Address?
+  invitationsSent Invitation[] @relation("InvitationsSentByUser")
+  createdEvents   Event[]      @relation("CreatedEvents")
+  expenses        Expense[]
+  histories       History[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Address {
+  id               String  @id @default(cuid())
+  userId           String  @unique
+  country          String
+  state            String?
+  city             String
+  zipCode          String?
+  street           String?
+  number           String?
+  departmentNumber String? 
+
+  user             User    @relation(fields: [userId], references: [id])
+}
+
+model Role {
+  id    String @id @default(cuid())
+  name  String @unique
+  users User[]
+}
+
+model ParentalAccount {
+  id        String  @id @default(cuid())
+  name      String
+  finalized Boolean @default(false)
+
+  users       User[]
+  children    Child[]
+  invitations Invitation[]
+  calendar    Calendar?
+  expenses    Expense[]
+  histories   History[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Child {
+  id                String          @id @default(cuid())
+  firstName         String
+  lastName          String?
+  birthDate         DateTime?
+  email             String?
+  phone             String?
+  parentalAccountId String
+  parentalAccount   ParentalAccount @relation(fields: [parentalAccountId], references: [id])
+
+  eventLinks        EventOnChildren[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Invitation {
+  id         String    @id @default(cuid())
+  code       String    @unique
+  email      String
+  firstName  String
+  expiresAt  DateTime
+  acceptedAt DateTime?
+  canceledAt DateTime?
+
+  invitedById String
+  invitedBy   User   @relation("InvitationsSentByUser", fields: [invitedById], references: [id])
+
+  parentalAccountId String
+  parentalAccount   ParentalAccount @relation(fields: [parentalAccountId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model Calendar {
+  id                String          @id @default(cuid())
+  parentalAccountId String          @unique
+  parentalAccount   ParentalAccount @relation(fields: [parentalAccountId], references: [id])
+  events            Event[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Event {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  start       DateTime
+  end         DateTime
+  location    String?
+  status      String   @default("pending")
+  calendarId  String
+  createdById String
+  categoryId  String?
+
+  calendar    Calendar   @relation(fields: [calendarId], references: [id])
+  createdBy   User       @relation("CreatedEvents", fields: [createdById], references: [id])
+  category    Category?  @relation("EventCategories", fields: [categoryId], references: [id])
+  children    EventOnChildren[]
+}
+
+model EventOnChildren {
+  eventId  String
+  childId  String
+
+  event    Event   @relation(fields: [eventId], references: [id])
+  child    Child   @relation(fields: [childId], references: [id])
+
+  @@id([eventId, childId])
+}
+
+model Category {
+  id        String    @id @default(cuid())
+  name      String
+  type      String
+  color     String?
+  icon      String?
+
+  events    Event[]   @relation("EventCategories")
+  expenses  Expense[] @relation("ExpenseCategories")
+  histories History[] @relation("HistoryCategories")
+}
+
+model Expense {
+  id                String   @id @default(cuid())
+  amount            Float
+  title             String
+  date              DateTime
+  categoryId        String?
+  userId            String
+  parentalAccountId String
+
+  category        Category?       @relation("ExpenseCategories", fields: [categoryId], references: [id])
+  user            User            @relation(fields: [userId], references: [id])
+  parentalAccount ParentalAccount @relation(fields: [parentalAccountId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model History {
+  id                String  @id @default(cuid())
+  parentalAccountId String
+  userId            String
+  type              String
+  categoryId        String?
+  summary           String
+  ip                String?
+  userAgent         String?
+
+  parentalAccount ParentalAccount @relation(fields: [parentalAccountId], references: [id])
+  user            User            @relation(fields: [userId], references: [id])
+  category        Category?       @relation("HistoryCategories", fields: [categoryId], references: [id])
+
+  createdAt DateTime @default(now())
+}
