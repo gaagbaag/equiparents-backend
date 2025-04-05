@@ -11,6 +11,8 @@ dotenv.config();
 
 const app = express();
 
+app.disable("etag");
+
 // ✅ Seguridad primero
 app.use(helmet());
 
