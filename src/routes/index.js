@@ -12,6 +12,7 @@ import {
 // Rutas de módulos
 import userRoutes from "../users/userRoutes.js";
 import authRoutes from "../auth/authRoutes.js";
+import sessionRoutes from "./sessionRoutes.js";
 import parentalRoutes from "../parentalAccounts/parentalRoutes.js";
 import invitationRoutes from "../invitations/invitationRoutes.js";
 import calendarRoutes from "../calendar/calendarRoutes.js";
@@ -28,6 +29,7 @@ const router = express.Router();
 // 🔐 Rutas protegidas
 router.use("/users", userRoutes);
 router.use("/auth", authRoutes);
+router.use("/session", sessionRoutes);
 router.use("/parental-accounts", checkJwt, authenticate, parentalRoutes);
 router.use("/invitations", checkJwt, authenticate, invitationRoutes);
 router.use(

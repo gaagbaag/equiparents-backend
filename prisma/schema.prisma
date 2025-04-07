@@ -16,6 +16,7 @@ model User {
   lastName          String?
   phone             String?
   countryCode       String?
+  countryDialCode   String?
   roleId            String
   role              Role             @relation(fields: [roleId], references: [id])
   parentalAccountId String?

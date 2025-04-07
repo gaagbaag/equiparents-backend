@@ -5,7 +5,10 @@ export const getMe = async (req, res) => {
   try {
     const user = await prisma.user.findUnique({
       where: { id: req.user.id },
-      include: { role: true },
+      include: {
+        role: true,
+        address: true,
+      },
     });
 
     if (!user) {
@@ -19,8 +22,10 @@ export const getMe = async (req, res) => {
       lastName: user.lastName,
       phone: user.phone,
       countryCode: user.countryCode,
+      countryDialCode: user.countryDialCode,
       role: user.role?.name,
       parentalAccountId: user.parentalAccountId,
+      address: user.address,
     });
   } catch (error) {
     console.error("❌ Error en GET /users/me:", error);
@@ -45,12 +50,12 @@ export const getAllUsers = async (req, res) => {
 // Admin actualiza a cualquier usuario por ID
 export const updateUser = async (req, res) => {
   const { id } = req.params;
-  const { firstName, lastName, phone } = req.body;
+  const { firstName, lastName, countryCode, phone } = req.body;
 
   try {
     const updated = await prisma.user.update({
       where: { id },
-      data: { firstName, lastName, phone },
+      data: { firstName, lastName, countryCode, phone },
     });
 
     return res.status(200).json(updated);
@@ -76,22 +81,20 @@ export const deleteUser = async (req, res) => {
 // Usuario actual actualiza sus datos
 export const updateCurrentUser = async (req, res) => {
   const auth0Id = req.auth?.payload?.sub;
-  const { firstName, lastName, phone, countryCode, address } = req.body;
+  const { firstName, lastName, phone, countryCode, countryDialCode, address } =
+    req.body;
 
   if (!auth0Id) {
     return res.status(401).json({ message: "Token inválido" });
   }
 
-  try {
-    const user = await prisma.user.findUnique({
-      where: { auth0Id },
-      include: { role: true },
+  if (!countryCode || !countryDialCode || !phone) {
+    return res.status(400).json({
+      message: "Faltan datos obligatorios: país o teléfono",
     });
+  }
 
-    if (!user) {
-      return res.status(404).json({ message: "Usuario no encontrado" });
-    }
-
+  try {
     const updatedUser = await prisma.user.update({
       where: { auth0Id },
       data: {
@@ -99,14 +102,34 @@ export const updateCurrentUser = async (req, res) => {
         lastName,
         phone,
         countryCode,
+        countryDialCode,
         address: {
           upsert: {
-            update: address,
-            create: address,
+            update: {
+              country: address.country,
+              state: address.state,
+              city: address.city,
+              zipCode: address.zipCode,
+              street: address.street,
+              number: address.number,
+              departmentNumber: address.departmentNumber,
+            },
+            create: {
+              country: address.country,
+              state: address.state,
+              city: address.city,
+              zipCode: address.zipCode,
+              street: address.street,
+              number: address.number,
+              departmentNumber: address.departmentNumber,
+            },
           },
         },
       },
-      include: { address: true, role: true },
+      include: {
+        address: true,
+        role: true,
+      },
     });
 
     return res.status(200).json({
@@ -116,6 +139,7 @@ export const updateCurrentUser = async (req, res) => {
       lastName: updatedUser.lastName,
       phone: updatedUser.phone,
       countryCode: updatedUser.countryCode,
+      countryDialCode: updatedUser.countryDialCode,
       role: updatedUser.role?.name,
       parentalAccountId: updatedUser.parentalAccountId,
       address: updatedUser.address,
