@@ -1,7 +1,7 @@
 import { prisma } from "../config/database.js";
 
 /**
- * 📅 GET /api/events
+ * 📅 GET /api/calendar/events
  * Devuelve eventos del calendario con filtros opcionales
  */
 export const getEvents = async (req, res) => {
@@ -35,12 +35,12 @@ export const getEvents = async (req, res) => {
     return res.status(200).json({ events });
   } catch (err) {
     console.error("❌ Error en getEvents:", err);
-    res.status(500).json({ message: "Error al obtener eventos" });
+    return res.status(500).json({ message: "Error al obtener eventos" });
   }
 };
 
 /**
- * 📝 POST /api/events
+ * 📝 POST /api/calendar/events
  * Crea un nuevo evento en el calendario familiar
  */
 export const createEvent = async (req, res) => {
@@ -68,9 +68,11 @@ export const createEvent = async (req, res) => {
       });
     }
 
+    // Eliminar duplicados
     childIds = [...new Set(childIds)];
     tagIds = [...new Set(tagIds)];
 
+    // Buscar el calendario
     const calendar = await prisma.calendar.findUnique({
       where: { parentalAccountId },
     });
@@ -79,6 +81,7 @@ export const createEvent = async (req, res) => {
       return res.status(404).json({ message: "Calendario no encontrado" });
     }
 
+    // Crear el evento
     const newEvent = await prisma.event.create({
       data: {
         calendarId: calendar.id,
@@ -106,9 +109,10 @@ export const createEvent = async (req, res) => {
       },
     });
 
-    // 🔎 Buscar categoría de historial "evento"
-    const historyCategory = await prisma.historyCategory.findFirst({
-      where: { name: "evento" },
+    // 🔎 Buscar la categoría de historial (type=history, name="Evento")
+    // para registrar la acción en el historial
+    const historyCategory = await prisma.category.findFirst({
+      where: { type: "history", name: "Evento" },
     });
 
     await prisma.history.create({
@@ -129,7 +133,7 @@ export const createEvent = async (req, res) => {
 };
 
 /**
- * 📌 GET /api/events/:id
+ * 📌 GET /api/calendar/events/:id
  * Devuelve un evento específico con hijos y categoría
  */
 export const getEventById = async (req, res) => {
@@ -153,6 +157,7 @@ export const getEventById = async (req, res) => {
       return res.status(404).json({ message: "Evento no encontrado" });
     }
 
+    // Reorganizar los hijos para comodidad
     const formatted = {
       ...event,
       children: event.children.map((ec) => ec.child),
@@ -161,6 +166,6 @@ export const getEventById = async (req, res) => {
     return res.status(200).json({ event: formatted });
   } catch (err) {
     console.error("❌ Error en getEventById:", err);
-    res.status(500).json({ message: "Error al obtener evento" });
+    return res.status(500).json({ message: "Error al obtener evento" });
   }
 };
