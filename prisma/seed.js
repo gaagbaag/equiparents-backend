@@ -20,7 +20,7 @@ async function main() {
         color: "#8B5CF6",
         icon: "palette",
       },
-      { name: "Tiempo Libre", type: "event", color: "#10B981", icon: "sun" },
+      { name: "Recreativo", type: "event", color: "#10B981", icon: "gamepad" },
       {
         name: "Pensión",
         type: "expense",
@@ -35,7 +35,7 @@ async function main() {
         icon: "shopping-cart",
       },
       { name: "Transporte", type: "expense", color: "#F97316", icon: "car" },
-      { name: "Salud", type: "expense", color: "#EF4444", icon: "heart-pulse" },
+      { name: "Servicios", type: "expense", color: "#EF4444", icon: "tools" },
       { name: "Sistema", type: "history", color: "#6B7280", icon: "terminal" },
       { name: "Invitación", type: "history", color: "#6366F1", icon: "mail" },
       {
@@ -52,14 +52,18 @@ async function main() {
 
   await prisma.tag.createMany({
     data: [
-      { name: "Padres Ambos", appliesTo: "event" },
-      { name: "Progenitor A", appliesTo: "event" },
-      { name: "Progenitor B", appliesTo: "event" },
       { name: "Presencial", appliesTo: "event" },
       { name: "Virtual", appliesTo: "event" },
-      { name: "Compartido", appliesTo: "expense" },
-      { name: "Responsable A", appliesTo: "expense" },
-      { name: "Responsable B", appliesTo: "expense" },
+      { name: "Híbrido", appliesTo: "event" },
+      { name: "Recurrente", appliesTo: "event" },
+      { name: "Urgente", appliesTo: "event" },
+      { name: "Planificado", appliesTo: "event" },
+      { name: "Interactivo", appliesTo: "event" },
+      { name: "Familiar", appliesTo: "event" },
+      { name: "Fijo", appliesTo: "expense" },
+      { name: "Variable", appliesTo: "expense" },
+      { name: "Prioritario", appliesTo: "expense" },
+      { name: "Eventual", appliesTo: "expense" },
     ],
     skipDuplicates: true,
   });

@@ -1,9 +1,7 @@
 import { prisma } from "../config/database.js";
+import { createGoogleCalendarEvent } from "../utils/googleCalendarService.js";
 
-/**
- * 📅 GET /api/calendar/events
- * Devuelve eventos del calendario con filtros opcionales
- */
+// 📅 GET /api/calendar/events
 export const getEvents = async (req, res) => {
   try {
     const { parentalAccountId } = req.user;
@@ -39,10 +37,7 @@ export const getEvents = async (req, res) => {
   }
 };
 
-/**
- * 📝 POST /api/calendar/events
- * Crea un nuevo evento en el calendario familiar
- */
+// 📝 POST /api/calendar/events
 export const createEvent = async (req, res) => {
   try {
     const { parentalAccountId, id: userId } = req.user;
@@ -56,6 +51,11 @@ export const createEvent = async (req, res) => {
       categoryId,
       childIds = [],
       tagIds = [],
+      parentIds = [],
+      timezone,
+      recurrenceRule,
+      meetingLink,
+      reminders = [],
     } = req.body;
 
     if (!title || !start || !end || !categoryId) {
@@ -68,11 +68,10 @@ export const createEvent = async (req, res) => {
       });
     }
 
-    // Eliminar duplicados
     childIds = [...new Set(childIds)];
     tagIds = [...new Set(tagIds)];
+    parentIds = [...new Set(parentIds)];
 
-    // Buscar el calendario
     const calendar = await prisma.calendar.findUnique({
       where: { parentalAccountId },
     });
@@ -81,7 +80,12 @@ export const createEvent = async (req, res) => {
       return res.status(404).json({ message: "Calendario no encontrado" });
     }
 
-    // Crear el evento
+    const durationHours = parseFloat(
+      ((new Date(end).getTime() - new Date(start).getTime()) / 3600000).toFixed(
+        2
+      )
+    );
+
     const newEvent = await prisma.event.create({
       data: {
         calendarId: calendar.id,
@@ -92,27 +96,34 @@ export const createEvent = async (req, res) => {
         end: new Date(end),
         location,
         status,
+        timezone,
+        recurrenceRule,
+        meetingLink,
         categoryId,
         children: {
-          create: childIds.map((childId) => ({
-            child: { connect: { id: childId } },
+          create: childIds.map((id) => ({ child: { connect: { id } } })),
+        },
+        tags: { connect: tagIds.map((id) => ({ id })) },
+        parents: {
+          create: parentIds.map((id) => ({
+            user: { connect: { id } },
+            hoursSpent: durationHours,
           })),
         },
-        tags: {
-          connect: tagIds.map((tagId) => ({ id: tagId })),
+        reminders: {
+          create: reminders.map((r) => ({
+            type: r.type,
+            minutesBefore: r.minutesBefore,
+          })),
         },
       },
       include: {
         children: { include: { child: true } },
         category: true,
         tags: true,
+        parents: { include: { user: true } },
+        reminders: true,
       },
-    });
-
-    // 🔎 Buscar la categoría de historial (type=history, name="Evento")
-    // para registrar la acción en el historial
-    const historyCategory = await prisma.category.findFirst({
-      where: { type: "history", name: "Evento" },
     });
 
     await prisma.history.create({
@@ -120,10 +131,30 @@ export const createEvent = async (req, res) => {
         userId,
         parentalAccountId,
         type: "evento",
-        categoryId: historyCategory?.id || undefined,
         summary: `📅 Evento creado: ${title} (${tagIds.length} etiquetas)`,
       },
     });
+
+    // 🚀 Sincronización Google Calendar
+    try {
+      const gEvent = await createGoogleCalendarEvent({
+        title,
+        description,
+        start,
+        end,
+        timezone,
+        recurrenceRule,
+        meetingLink,
+        reminders,
+      });
+      console.log("✅ Evento sincronizado en Google Calendar:", gEvent.id);
+    } catch (syncError) {
+      console.error(
+        "⚠️ Error al sincronizar con Google Calendar:",
+        syncError.message
+      );
+      // Decidir si manejar rollback o solo registrar el error
+    }
 
     return res.status(201).json({ message: "Evento creado", event: newEvent });
   } catch (error) {
@@ -132,20 +163,14 @@ export const createEvent = async (req, res) => {
   }
 };
 
-/**
- * 📌 GET /api/calendar/events/:id
- * Devuelve un evento específico con hijos y categoría
- */
+// 📌 GET /api/calendar/events/:id
 export const getEventById = async (req, res) => {
   try {
     const { id } = req.params;
     const { parentalAccountId } = req.user;
 
     const event = await prisma.event.findFirst({
-      where: {
-        id,
-        calendar: { parentalAccountId },
-      },
+      where: { id, calendar: { parentalAccountId } },
       include: {
         category: true,
         children: { include: { child: true } },
@@ -157,7 +182,6 @@ export const getEventById = async (req, res) => {
       return res.status(404).json({ message: "Evento no encontrado" });
     }
 
-    // Reorganizar los hijos para comodidad
     const formatted = {
       ...event,
       children: event.children.map((ec) => ec.child),
