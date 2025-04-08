@@ -11,6 +11,7 @@
     "format": "prisma format",
     "reset": "prisma migrate reset",
     "test": "jest",
+    "seed": "node prisma/seed.js",
     "clean:history": "node scripts/cleanDuplicateHistory.js",
     "postinstall": "pnpm install && echo '📦 Dependencias verificadas (incluyendo nodemon)'"
   },

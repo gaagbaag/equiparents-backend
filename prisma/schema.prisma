@@ -79,8 +79,7 @@ model Child {
   parentalAccountId String
   parentalAccount   ParentalAccount @relation(fields: [parentalAccountId], references: [id])
 
-  // Añadir el campo de relación opuesta con `@relation("EventChildren")`
-  events            Event[]    @relation("EventChildren") 
+  events            EventOnChildren[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -129,12 +128,21 @@ model Event {
   calendar    Calendar   @relation(fields: [calendarId], references: [id])
   createdBy   User       @relation("CreatedEvents", fields: [createdById], references: [id])
 
-  children    Child[]    @relation("EventChildren")
-  
+  children    EventOnChildren[]
+
   tags        Tag[]      @relation("EventTags")
   metrics     Metric[]   @relation("EventMetrics")
   categoryId  String?
-  category    EventCategory? @relation(fields: [categoryId], references: [id])
+  category    Category?  @relation(fields: [categoryId], references: [id])
+}
+
+model EventOnChildren {
+  id       String @id @default(cuid())
+  eventId  String
+  childId  String
+
+  event    Event @relation(fields: [eventId], references: [id])
+  child    Child @relation(fields: [childId], references: [id])
 }
 
 model Expense {
@@ -151,7 +159,7 @@ model Expense {
   tags        Tag[]         @relation("ExpenseTags")
   metrics     Metric[]      @relation("ExpenseMetrics")
   categoryId  String?
-  category    ExpenseCategory? @relation(fields: [categoryId], references: [id])
+  category    Category?     @relation(fields: [categoryId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -169,10 +177,22 @@ model History {
   parentalAccount ParentalAccount @relation(fields: [parentalAccountId], references: [id])
   user            User            @relation(fields: [userId], references: [id])
   categoryId      String?
-  category        HistoryCategory? @relation(fields: [categoryId], references: [id])
-  tags            Tag[]            @relation("HistoryTags")
+  category        Category?       @relation(fields: [categoryId], references: [id])
+  tags            Tag[]           @relation("HistoryTags")
 
   createdAt DateTime @default(now())
+}
+
+model Category {
+  id       String @id @default(cuid())
+  name     String
+  type     String // event | expense | history
+  color    String?
+  icon     String?
+
+  events     Event[]
+  expenses   Expense[]
+  histories  History[]
 }
 
 model Tag {
@@ -183,30 +203,6 @@ model Tag {
   events     Event[]   @relation("EventTags")
   expenses   Expense[] @relation("ExpenseTags")
   histories  History[] @relation("HistoryTags")
-}
-
-model EventCategory {
-  id     String @id @default(cuid())
-  name   String
-  color  String?
-  icon   String?
-  events Event[]
-}
-
-model ExpenseCategory {
-  id       String @id @default(cuid())
-  name     String
-  color    String?
-  icon     String?
-  expenses Expense[]
-}
-
-model HistoryCategory {
-  id       String   @id @default(cuid())
-  name     String
-  color    String?
-  icon     String?
-  histories History[]
 }
 
 model Metric {

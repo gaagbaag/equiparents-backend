@@ -3,8 +3,8 @@ import cors from "cors";
 import morgan from "morgan";
 import helmet from "helmet";
 import dotenv from "dotenv";
-import apiRoutes from "./routes/index.js";
-import emailTestRoutes from "../test/emailTestRoutes.js";
+import apiRoutes from "./api/index.js";
+import emailTestRoutes from "./api/tests/emailTestRoutes.js";
 
 dotenv.config();
 
