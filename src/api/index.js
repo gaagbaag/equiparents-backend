@@ -15,6 +15,7 @@ import userRoutes from "./users/userRoutes.js";
 import parentalRoutes from "./parentalAccounts/parentalRoutes.js";
 import invitationRoutes from "./invitations/invitationRoutes.js";
 import calendarRoutes from "./calendar/calendarRoutes.js";
+import googleOAuthRoutes from "./google/googleOAuthRoutes.js";
 import historyRoutes from "./history/historyRoutes.js";
 import adminRoutes from "./admin/adminRoutes.js";
 import categoryRoutes from "./categories/categoryRoutes.js";
@@ -37,6 +38,7 @@ router.use(
   requireParentalAccount,
   calendarRoutes
 );
+router.use("/google", googleOAuthRoutes);
 router.use(
   "/children",
   checkJwt,

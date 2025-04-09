@@ -1,5 +1,5 @@
 import { prisma } from "../config/database.js";
-import { createGoogleCalendarEvent } from "../utils/googleCalendarService.js";
+import { syncEventWithConnectedParents } from "../utils/googleCalendarService.js";
 
 // 📅 GET /api/calendar/events
 export const getEvents = async (req, res) => {
@@ -135,9 +135,9 @@ export const createEvent = async (req, res) => {
       },
     });
 
-    // 🚀 Sincronización Google Calendar
+    // 🚀 Sincronización Google Calendar (para todos los padres conectados)
     try {
-      const gEvent = await createGoogleCalendarEvent({
+      await syncEventWithConnectedParents(parentIds, {
         title,
         description,
         start,
@@ -147,13 +147,11 @@ export const createEvent = async (req, res) => {
         meetingLink,
         reminders,
       });
-      console.log("✅ Evento sincronizado en Google Calendar:", gEvent.id);
     } catch (syncError) {
       console.error(
         "⚠️ Error al sincronizar con Google Calendar:",
         syncError.message
       );
-      // Decidir si manejar rollback o solo registrar el error
     }
 
     return res.status(201).json({ message: "Evento creado", event: newEvent });

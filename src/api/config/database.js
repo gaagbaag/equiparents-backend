@@ -1,4 +1,5 @@
-import { PrismaClient } from "@prisma/client";
+import pkg from "@prisma/client";
+const { PrismaClient } = pkg;
 
 // Prisma Client: solo se crea una instancia para reutilizarla (evitar nuevas conexiones en cada import)
 let prisma;
@@ -6,7 +7,6 @@ let prisma;
 if (process.env.NODE_ENV === "production") {
   prisma = new PrismaClient();
 } else {
-  // Usar una instancia global en desarrollo para evitar que se creen múltiples instancias
   if (!global.prisma) {
     global.prisma = new PrismaClient();
   }

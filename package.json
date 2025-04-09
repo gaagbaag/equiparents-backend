@@ -13,7 +13,7 @@
     "test": "jest",
     "seed": "node prisma/seed.js",
     "clean:history": "node scripts/cleanDuplicateHistory.js",
-    "postinstall": "pnpm install && echo '📦 Dependencias verificadas (incluyendo nodemon)'"
+    "check:deps": "echo '📦 Dependencias backend instaladas correctamente ✅'"
   },
   "keywords": [
     "node",
