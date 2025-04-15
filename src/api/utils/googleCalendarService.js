@@ -72,25 +72,41 @@ export async function createGoogleCalendarEventForUser(user, eventData) {
 }
 
 /**
- * Sincroniza un evento con Google Calendar para todos los progenitores con integración activa.
+ * Sincroniza un evento con Google Calendar para todos los padres conectados
+ * @param {Object} event - El evento de Prisma recién creado
+ * @param {Array} connectedParents - Lista de usuarios con googleRefreshToken + googleCalendarId
  */
-export async function syncEventWithConnectedParents(parentIds, eventData) {
-  try {
-    const users = await prisma.user.findMany({
-      where: {
-        id: { in: parentIds },
-        googleRefreshToken: { not: null },
-        googleCalendarId: { not: null },
-      },
-    });
+export async function syncEventWithConnectedParents(event, connectedParents) {
+  for (const parent of connectedParents) {
+    try {
+      oauth2Client.setCredentials({
+        refresh_token: parent.googleRefreshToken,
+      });
 
-    await Promise.all(
-      users.map((user) => createGoogleCalendarEventForUser(user, eventData))
-    );
-  } catch (err) {
-    console.error(
-      "❌ Error al sincronizar evento con Google Calendar para padres conectados:",
-      err
-    );
+      const calendar = google.calendar({ version: "v3", auth: oauth2Client });
+
+      const googleEvent = {
+        summary: event.title,
+        description: event.description || undefined,
+        location: event.location || undefined,
+        start: { dateTime: new Date(event.start).toISOString() },
+        end: { dateTime: new Date(event.end).toISOString() },
+      };
+
+      const inserted = await calendar.events.insert({
+        calendarId: parent.googleCalendarId,
+        requestBody: googleEvent,
+      });
+
+      console.log(
+        `✅ Evento sincronizado con Google (${parent.email}):`,
+        inserted.data.id
+      );
+    } catch (err) {
+      console.warn(
+        `⚠️ Error al sincronizar evento con Google (${parent.email}):`,
+        err.message
+      );
+    }
   }
 }

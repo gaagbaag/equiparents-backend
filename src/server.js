@@ -5,7 +5,7 @@ import helmet from "helmet";
 import dotenv from "dotenv";
 import apiRoutes from "./api/index.js";
 import emailTestRoutes from "./api/tests/emailTestRoutes.js";
-import googleOAuthRoutes from "./api/google/googleOAuthRoutes.js"; // ⬅️ IMPORTANTE
+import googleOAuthRoutes from "./api/google/googleOAuthRoutes.js";
 
 dotenv.config();
 

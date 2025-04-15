@@ -8,30 +8,30 @@ datasource db {
 }
 
 model User {
-  id                String              @id @default(cuid())
-  auth0Id           String              @unique
-  email             String              @unique
-  name              String
-  firstName         String?
-  lastName          String?
-  phone             String?
-  countryCode       String?
-  countryDialCode   String?
-  roleId            String
-  role              Role                @relation(fields: [roleId], references: [id])
-  parentalAccountId String?
-  parentalAccount   ParentalAccount?    @relation(fields: [parentalAccountId], references: [id])
-  address           Address?
-  invitationsSent   Invitation[]        @relation("InvitationsSentByUser")
-  createdEvents     Event[]             @relation("CreatedEvents")
-  googleRefreshToken  String?  
-  googleCalendarId    String?  
-  expenses          Expense[]
-  histories         History[]
-  points            GamificationPoint[]
-  parentsOnEvents   EventOnParents[]    @relation("UserOnParents")
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
+  id                  String              @id @default(cuid())
+  auth0Id             String              @unique
+  email               String              @unique
+  name                String
+  firstName           String?
+  lastName            String?
+  phone               String?
+  countryCode         String?
+  countryDialCode     String?
+  roleId              String
+  role                Role                @relation(fields: [roleId], references: [id])
+  parentalAccountId   String?
+  parentalAccount     ParentalAccount?    @relation(fields: [parentalAccountId], references: [id])
+  address             Address?
+  invitationsSent     Invitation[]        @relation("InvitationsSentByUser")
+  createdEvents       Event[]             @relation("CreatedEvents")
+  googleRefreshToken  String?
+  googleCalendarId    String?
+  expenses            Expense[]
+  histories           History[]
+  points              GamificationPoint[]
+  parentsOnEvents     EventOnParents[]    @relation("UserOnParents")
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
 }
 
 model Address {
@@ -127,6 +127,7 @@ model Event {
   category       Category?         @relation(fields: [categoryId], references: [id])
   parents        EventOnParents[]  @relation("EventOnParents")
   reminders      Reminder[]
+  googleEventId  String?           @unique
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
 }

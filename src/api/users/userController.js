@@ -18,17 +18,31 @@ export const getMe = async (req, res) => {
       return res.status(404).json({ message: "Usuario no encontrado" });
     }
 
+    console.log("📦 Usuario enviado al frontend:", {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+      googleCalendarId: user.googleCalendarId,
+    });
+
     return res.status(200).json({
       id: user.id,
       email: user.email,
+      name: user.name,
       firstName: user.firstName,
       lastName: user.lastName,
       phone: user.phone,
       countryCode: user.countryCode,
       countryDialCode: user.countryDialCode,
-      role: user.role?.name,
       parentalAccountId: user.parentalAccountId,
       address: user.address,
+      role: user.role?.name,
+      googleRefreshToken: user.googleRefreshToken,
+      googleCalendarId: user.googleCalendarId,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
     });
   } catch (error) {
     console.error("❌ Error en GET /users/me:", error);
@@ -146,6 +160,8 @@ export const updateCurrentUser = async (req, res) => {
       role: updatedUser.role?.name,
       parentalAccountId: updatedUser.parentalAccountId,
       address: updatedUser.address,
+      googleCalendarId: updatedUser.googleCalendarId,
+      googleRefreshToken: updatedUser.googleRefreshToken,
     });
   } catch (error) {
     console.error("❌ Error en PUT /users/me:", error);

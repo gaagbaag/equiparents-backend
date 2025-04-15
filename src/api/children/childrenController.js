@@ -78,7 +78,6 @@ export const createChild = async (req, res) => {
       },
     });
 
-    // 🧠 Historial
     await createHistoryEntry({
       parentalAccountId,
       userId,
@@ -88,11 +87,7 @@ export const createChild = async (req, res) => {
       userAgent: getUserAgent(req),
     });
 
-    res.status(201).json({
-      status: "success",
-      message: "Hijo creado correctamente.",
-      data: newChild,
-    });
+    res.status(201).json(newChild); // ✅ devuelve el hijo directamente
   } catch (error) {
     console.error("❌ Error en createChild:", error);
     res.status(500).json({ message: "Error al crear el hijo." });
@@ -105,17 +100,36 @@ export const createChild = async (req, res) => {
 export const updateChild = async (req, res) => {
   const { id } = req.params;
   const { firstName, birthDate } = req.body;
+  const { id: userId, parentalAccountId } = req.user;
 
   try {
+    const existing = await prisma.child.findUnique({ where: { id } });
+
+    if (!existing || existing.parentalAccountId !== parentalAccountId) {
+      return res
+        .status(403)
+        .json({ message: "No tienes permiso para modificar este hijo." });
+    }
+
     const updated = await prisma.child.update({
       where: { id },
       data: { firstName, birthDate },
     });
 
-    res.status(200).json({ status: "success", data: updated });
+    // 🧠 Registrar historial
+    await createHistoryEntry({
+      parentalAccountId,
+      userId,
+      type: "hijo editado",
+      summary: `Se actualizó al hijo/a de "${existing.firstName}" a "${updated.firstName}"`,
+      ip: getClientIP(req),
+      userAgent: getUserAgent(req),
+    });
+
+    res.status(200).json(updated);
   } catch (error) {
-    console.error("❌ Error al actualizar hijo:", error);
-    res.status(500).json({ message: "Error al actualizar hijo." });
+    console.error("❌ Error al actualizar hijo/a:", error);
+    res.status(500).json({ message: "Error al actualizar hijo/a." });
   }
 };
 

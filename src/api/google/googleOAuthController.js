@@ -73,8 +73,8 @@ export const saveGoogleRefreshToken = async (req, res) => {
 // Paso 4: listar calendarios
 export const listUserCalendars = async (req, res) => {
   try {
-    const auth0Id = req.user.sub;
-    const user = await prisma.user.findUnique({ where: { auth0Id } });
+    const userId = req.user.id;
+    const user = await prisma.user.findUnique({ where: { id: userId } });
 
     if (!user?.googleRefreshToken) {
       return res.status(400).json({ message: "No hay refresh_token guardado" });
@@ -101,13 +101,13 @@ export const listUserCalendars = async (req, res) => {
 export const selectUserCalendar = async (req, res) => {
   try {
     const { calendarId } = req.body;
-    const auth0Id = req.user.sub;
+    const userId = req.user.id;
 
     if (!calendarId) {
       return res.status(400).json({ message: "calendarId requerido" });
     }
 
-    const user = await prisma.user.findUnique({ where: { auth0Id } });
+    const user = await prisma.user.findUnique({ where: { id: userId } });
 
     if (!user) {
       return res.status(404).json({ message: "Usuario no encontrado" });
